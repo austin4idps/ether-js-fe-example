@@ -1,95 +1,174 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client'; // This is a client component 👈🏽
+import { EtherUtil } from '@/util/ether.util';
+import { ethers } from 'ethers';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+	// amount
+	const [balance, setBalance] = useState<bigint>(BigInt(0));
+	const [amount, setAmount] = useState(BigInt(0));
+	const [allowance, setAllowance] = useState(BigInt(0));
+	// boolean
+	const [isConnected, setIsConnected] = useState(false);
+	const [hasMetamask, setHasMetamask] = useState(false);
+	// signer related
+	const [walletAddress, setWalletAddress] = useState<string | null>(null);
+	const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+	useEffect(() => {
+		if (typeof window.ethereum !== 'undefined') {
+			setHasMetamask(true);
+		}
+	}, []);
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+	async function connect() {
+		if (typeof window.ethereum !== 'undefined') {
+			try {
+				await window.ethereum.request({ method: 'eth_requestAccounts' });
+				setIsConnected(true);
+				const provider = new ethers.BrowserProvider(window.ethereum);
+				const signer = await provider.getSigner();
+				setSigner(signer);
+				setWalletAddress(signer.address);
+			} catch (e) {
+				console.log(e);
+			}
+		} else {
+			setIsConnected(false);
+		}
+	}
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+	async function getBalance() {
+		if (!!signer) {
+			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
+			const etherUtil = new EtherUtil(contractAddress);
+			const number = await etherUtil.balanceOf(signer);
+			if (number > 0) {
+				setBalance(number);
+				return balance;
+			}
+		}
+	}
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
+	async function increaseAllowance() {
+		if (!!signer) {
+			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
+			const etherUtil = new EtherUtil(contractAddress);
+			await etherUtil.increaseAllowance(signer, amount, contractAddress);
+		}
+	}
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+	async function getAllowance() {
+		if (!!signer && !!walletAddress) {
+			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
+			const etherUtil = new EtherUtil(contractAddress);
+			const number = await etherUtil.getAllowance(
+				signer,
+				walletAddress,
+				contractAddress
+			);
+			if (number > 0) {
+				setAllowance(number);
+				return allowance;
+			}
+		}
+	}
+	return (
+		<div className="bg-slate-800 h-screen flex items-center justify-center text-white">
+			<div className="flex flex-col items-center justify-center ">
+				<div className="p-10">
+					{hasMetamask ? (
+						isConnected ? (
+							'Connected! '
+						) : (
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-blue-600 text-white"
+								onClick={() => connect()}
+							>
+								Connect
+							</button>
+						)
+					) : (
+						'Please install metamask'
+					)}
+				</div>
+				<div className="flex items-center justify-center w-full">
+					<p className="mr-auto">
+						{walletAddress ? (
+							<span>
+								{walletAddress} | Balance: ${balance.toString()}
+							</span>
+						) : (
+							''
+						)}
+					</p>
+					<p>
+						{' '}
+						{isConnected ? (
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-red-600 ml-4
+								"
+								onClick={getBalance}
+							>
+								Get-Balance
+							</button>
+						) : (
+							''
+						)}
+					</p>
+				</div>
+				<div className="flex items-center justify-center w-full mt-4">
+					{isConnected ? (
+						<>
+							<label htmlFor="amountInput" className="mr-2">
+								Allowance:
+							</label>
+							<input
+								id="amountInput"
+								type="number"
+								className="mr-auto text-black border rounded-md"
+								onChange={(e) => {
+									setAmount(BigInt(e.target.value));
+								}}
+							/>
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-red-600"
+								onClick={increaseAllowance}
+							>
+								increaseAllowance
+							</button>
+						</>
+					) : (
+						''
+					)}
+				</div>
+
+				<div className="flex items-center justify-center w-full mt-4">
+					<p>
+						{walletAddress ? (
+							<span>
+								{walletAddress} | Allowance: ${allowance.toString()}
+							</span>
+						) : (
+							''
+						)}
+					</p>
+					<p className="mb-4">
+						{' '}
+						{isConnected ? (
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-red-600 ml-4
+								"
+								onClick={getAllowance}
+							>
+								Get-Allowance
+							</button>
+						) : (
+							''
+						)}
+					</p>
+				</div>
+			</div>
+		</div>
+	);
 }

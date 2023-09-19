@@ -1,5 +1,5 @@
 'use client'; // This is a client component 👈🏽
-import { EtherUtil } from '@/util/ether.util';
+import { EtherErc20Util } from '@/util/ether-erc20.util';
 import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 
@@ -41,7 +41,7 @@ export default function Home() {
 	async function getBalance() {
 		if (!!signer) {
 			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
-			const etherUtil = new EtherUtil(contractAddress);
+			const etherUtil = new EtherErc20Util(contractAddress);
 			const number = await etherUtil.balanceOf(signer);
 			if (number > 0) {
 				setBalance(number);
@@ -53,7 +53,7 @@ export default function Home() {
 	async function increaseAllowance() {
 		if (!!signer) {
 			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
-			const etherUtil = new EtherUtil(contractAddress);
+			const etherUtil = new EtherErc20Util(contractAddress);
 			await etherUtil.increaseAllowance(signer, amount, contractAddress);
 		}
 	}
@@ -61,7 +61,7 @@ export default function Home() {
 	async function getAllowance() {
 		if (!!signer && !!walletAddress) {
 			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
-			const etherUtil = new EtherUtil(contractAddress);
+			const etherUtil = new EtherErc20Util(contractAddress);
 			const number = await etherUtil.getAllowance(
 				signer,
 				walletAddress,

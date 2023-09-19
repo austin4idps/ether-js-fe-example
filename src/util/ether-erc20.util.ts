@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import erc20Abi from './abi/erc20-abi.json';
 
-export class EtherUtil {
+export class EtherErc20Util {
 	private contractAddress: string;
 
 	private abi = erc20Abi;

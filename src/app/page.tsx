@@ -1,4 +1,5 @@
 'use client'; // This is a client component 👈🏽
+import { EtherErc721Util } from '@/util/erther-erc721.util';
 import { EtherErc20Util } from '@/util/ether-erc20.util';
 import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
@@ -8,6 +9,7 @@ export default function Home() {
 	const [balance, setBalance] = useState<bigint>(BigInt(0));
 	const [amount, setAmount] = useState(BigInt(0));
 	const [allowance, setAllowance] = useState(BigInt(0));
+	const [mintPrice, setMintPrice] = useState(BigInt(0));
 	// boolean
 	const [isConnected, setIsConnected] = useState(false);
 	const [hasMetamask, setHasMetamask] = useState(false);
@@ -58,6 +60,14 @@ export default function Home() {
 		}
 	}
 
+	async function decreaseAllowance() {
+		if (!!signer) {
+			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
+			const etherUtil = new EtherErc20Util(contractAddress);
+			await etherUtil.decreaseAllowance(signer, amount, contractAddress);
+		}
+	}
+
 	async function getAllowance() {
 		if (!!signer && !!walletAddress) {
 			const contractAddress = '0x5d347E3c00261a6306578DA5c9640D54c97f8C3F';
@@ -67,12 +77,23 @@ export default function Home() {
 				walletAddress,
 				contractAddress
 			);
+			console.log('Allowance:', BigInt(number).toString());
 			if (number > 0) {
 				setAllowance(number);
 				return allowance;
 			}
 		}
 	}
+
+	async function getMintPrice() {
+		if (!!signer) {
+			const contractAddress = '0x9910DB62C8892DB93b28ed18632bC08170ED5573';
+			const etherUtil = new EtherErc721Util(contractAddress);
+			const res = await etherUtil.getMintPrice(signer);
+			setMintPrice(res);
+		}
+	}
+
 	return (
 		<div className="bg-slate-800 h-screen flex items-center justify-center text-white">
 			<div className="flex flex-col items-center justify-center ">
@@ -117,6 +138,7 @@ export default function Home() {
 						)}
 					</p>
 				</div>
+
 				<div className="flex items-center justify-center w-full mt-4">
 					{isConnected ? (
 						<>
@@ -144,11 +166,35 @@ export default function Home() {
 				</div>
 
 				<div className="flex items-center justify-center w-full mt-4">
+					{isConnected ? (
+						<>
+							<label htmlFor="amountInput" className="mr-2">
+								Allowance:
+							</label>
+							<input
+								id="amountInput"
+								type="number"
+								className="mr-auto text-black border rounded-md"
+								onChange={(e) => {
+									setAmount(BigInt(e.target.value));
+								}}
+							/>
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-red-600"
+								onClick={decreaseAllowance}
+							>
+								decreaseAllowance
+							</button>
+						</>
+					) : (
+						''
+					)}
+				</div>
+
+				<div className="flex items-center justify-center w-full mt-4">
 					<p>
 						{walletAddress ? (
-							<span>
-								{walletAddress} | Allowance: ${allowance.toString()}
-							</span>
+							<span>Allowance: ${allowance.toString()}</span>
 						) : (
 							''
 						)}
@@ -162,6 +208,30 @@ export default function Home() {
 								onClick={getAllowance}
 							>
 								Get-Allowance
+							</button>
+						) : (
+							''
+						)}
+					</p>
+				</div>
+
+				<div className="flex items-center justify-center w-full mt-4">
+					<p>
+						{walletAddress ? (
+							<span>Mint-Price: ${mintPrice.toString()}</span>
+						) : (
+							''
+						)}
+					</p>
+					<p className="mb-4">
+						{' '}
+						{isConnected ? (
+							<button
+								className="border rounded-md cursor-pointer px-1 py-2 bg-red-600 ml-4
+								"
+								onClick={getMintPrice}
+							>
+								Get-Mint-Price
 							</button>
 						) : (
 							''

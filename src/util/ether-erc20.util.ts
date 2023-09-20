@@ -38,6 +38,24 @@ export class EtherErc20Util {
 		}
 	}
 
+	async decreaseAllowance(
+		signer: ethers.JsonRpcSigner,
+		amount: bigint,
+		toAddress: string
+	) {
+		const contract = new ethers.Contract(
+			this.contractAddress,
+			this.abi,
+			signer
+		);
+		try {
+			const result = await contract.decreaseAllowance(toAddress, amount);
+			console.log(result);
+		} catch (e) {
+			console.log(e);
+		}
+	}
+
 	async getAllowance(
 		signer: ethers.JsonRpcSigner,
 		fromAddress: string,
